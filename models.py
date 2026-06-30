@@ -42,4 +42,18 @@ class Connection:
 
 
 class Network:
-    def __init__(self, )
+    def __init__(self) -> None:
+        self.zones: dict[str, Zone] = {}
+        self.connections: list[Connection] = []
+        self.start_zone: Zone | None = None
+        self.end_zone: Zone | None = None
+
+    def add_zone(self, zone: Zone) -> None:
+        self.zones[zone.name] = zone
+        if zone.is_start:
+            self.start_zone = zone
+        elif zone.is_end:
+            self.end_zone = zone
+
+    def add_connection(self, connection: Connection) -> None:
+        self.connections.append(connection)
