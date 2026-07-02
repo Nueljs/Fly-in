@@ -1,4 +1,4 @@
-from models import Network, Zone
+from models import Network, Zone, ZoneType, Connection
 
 
 class MapParser:
@@ -10,9 +10,12 @@ class MapParser:
 
     def _parse_zone(self, line: str) -> Zone:
         splited_data: list = line.split("[")
+        color: str | None = None
+        max_drones: int = 1
+        zone_enum: ZoneType = ZoneType.NORMAL
         if len(splited_data) > 1:
             metadata: str = splited_data[1]
-            metadata.replace("]", "")
+            metadata = metadata.replace("]", "")
             splited_metadata = metadata.split()
             dict_metadata: dict = {}
             for item in splited_metadata:
@@ -21,18 +24,26 @@ class MapParser:
                     dict_metadata[meta_list[0]] = meta_list[1]
                 else:
                     raise ValueError(f"Error on line {self.current_line}:"
-                                       " invalid format in metadata use [key=value]")
+                                     " invalid format in metadata use"
+                                     " [key=value]")
             if "zone" in dict_metadata:
-                zone = dict_metadata["zone"]
+                try:
+                    zone_enum = ZoneType(dict_metadata["zone"])
+                except ValueError:
+                    raise ValueError(f"Error on line {self.current_line}: "
+                                     "invalid zone type")
             if "color" in dict_metadata:
                 color = dict_metadata["color"]
             if "max_drones" in dict_metadata:
                 try:
                     max_drones = int(dict_metadata["max_drones"])
                 except ValueError:
-                    raise ValueError(f"Error on line f{self.current_line}: "
+                    raise ValueError(f"Error on line {self.current_line}: "
                                      "max_drones must be an int")
         data_list: list = [data.strip() for data in splited_data[0].split()]
+        if len(data_list) != 4:
+            raise ValueError(f"Error on line {self.current_line}"
+                             " invalid zone format")
         zone_type, name, str_x, str_y = data_list
         try:
             x = int(str_x)
@@ -40,6 +51,39 @@ class MapParser:
         except ValueError:
             raise ValueError(f"Error on line {self.current_line},"
                              " the coordenates must be a int")
+        new_zone = Zone(name, x, y, zone_enum, color, max_drones)
+
+        if zone_type == "start_hub:":
+            new_zone.is_start = True
+        elif zone_type == "end_hub:":
+            new_zone.is_end = True
+        elif zone_type != "hub:":
+            raise ValueError(f"Error on line {self.current_line}"
+                             f"invalid hub type '{zone_type}'")
+
+        return new_zone
+
+    def _parse_connection(self, line: str):
+        max_link_capacity: int = 1
+        splited_data: list[str] = line.split("[")
+        dict_metadata: dict[str, str] = {}
+        if len(splited_data) > 1:
+            metadata: str = splited_data[1]
+            metadata = metadata.replace("]", "")
+            splited_metadata = metadata.split("=")
+            if len(splited_metadata) == 2:
+                dict_metadata[splited_metadata[0]] = splited_metadata[1]
+            else:
+                raise ValueError(f"Error on line {self.current_line}:"
+                                 " invalid format in metadata use"
+                                 " [key=value]")
+            if "max_link_capacity" in dict_metadata:
+                try:
+                    max_link_capacity = int(
+                        dict_metadata["max_link_capacity"])
+                except ValueError:
+                    raise ValueError(f"Error on line {self.current_line} "
+                                     "max_link_capacity must be an int")
 
     def parse(self) -> Network:
         with open(self.filepath, 'r') as f:
@@ -55,10 +99,18 @@ class MapParser:
                     try:
                         value_drone = int(split_line[1])
                     except ValueError:
-                        raise ValueError(f"Error at line {self.current_line}: nb_drones must be an int")
+                        raise ValueError(f"Error at line {self.current_line}:"
+                                         " nb_drones must be an int")
                     if value_drone > 0:
                         self.nb_drones = value_drone
                     else:
                         raise ValueError(f"Error at line {self.current_line}:"
-                                        f"nb_drones must be greater than zero")
-
+                                         f"nb_drones must be greater than "
+                                         "zero")
+                elif line.startswith(("hub:", "start_hub:", "end_hub:")):
+                    created_zone = self._parse_zone(line)
+                    self.network.add_zone(created_zone)
+                elif line.startswith("connection:"):
+                    created_connection = self._parse_connection(line)
+                    self.network.add_connection(created_connection)
+        return self.network
