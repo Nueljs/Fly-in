@@ -16,9 +16,9 @@ class MapParser:
         if len(splited_data) > 1:
             metadata: str = splited_data[1]
             metadata = metadata.replace("]", "")
-            splited_metadata = metadata.split()
+            split_metadata = metadata.split()
             dict_metadata: dict = {}
-            for item in splited_metadata:
+            for item in split_metadata:
                 meta_list = item.split("=")
                 if len(meta_list) == 2:
                     dict_metadata[meta_list[0]] = meta_list[1]
@@ -65,25 +65,35 @@ class MapParser:
 
     def _parse_connection(self, line: str):
         max_link_capacity: int = 1
-        splited_data: list[str] = line.split("[")
-        dict_metadata: dict[str, str] = {}
-        if len(splited_data) > 1:
-            metadata: str = splited_data[1]
-            metadata = metadata.replace("]", "")
-            splited_metadata = metadata.split("=")
-            if len(splited_metadata) == 2:
-                dict_metadata[splited_metadata[0]] = splited_metadata[1]
-            else:
-                raise ValueError(f"Error on line {self.current_line}:"
-                                 " invalid format in metadata use"
-                                 " [key=value]")
-            if "max_link_capacity" in dict_metadata:
+        line_parts: list[str] = line.split("[")
+        parsed_meta: dict[str, str] = {}
+
+        if len(line_parts) > 1:
+            raw_metadata: str = line_parts[1].replace("]", "")
+            metadata_items: list[str] = raw_metadata.split()
+
+            for item in metadata_items:
+                key_value: list[str] = item.split("=")
+                if len(key_value) == 2:
+                    parsed_meta[key_value[0]] = key_value[1]
+                else:
+                    raise ValueError(f"Error on line {self.current_line}:"
+                                     " invalid format in metadata use"
+                                     " [key=value]")
+
+            if "max_link_capacity" in parsed_meta:
                 try:
                     max_link_capacity = int(
-                        dict_metadata["max_link_capacity"])
+                        parsed_meta["max_link_capacity"])
                 except ValueError:
                     raise ValueError(f"Error on line {self.current_line} "
                                      "max_link_capacity must be an int")
+        data_list: list[str] = line_parts[0].replace("-", " ").split()
+        if len(data_list) != 3:
+            raise ValueError(f"Error on line {self.current_line} "
+                             "invalid format on connection data")
+        zone1: str = data_list[1]
+        zone2: str = data_list[2]
 
     def parse(self) -> Network:
         with open(self.filepath, 'r') as f:
