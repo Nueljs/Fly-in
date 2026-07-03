@@ -94,6 +94,7 @@ class MapParser:
                              "invalid format on connection data")
         zone1: str = data_list[1]
         zone2: str = data_list[2]
+        connection: Connection = Connection(zone1, zone2, max_link_capacity)
 
     def parse(self) -> Network:
         with open(self.filepath, 'r') as f:
