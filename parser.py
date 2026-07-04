@@ -3,12 +3,14 @@ from models import Network, Zone, ZoneType, Connection
 
 class MapParser:
     def __init__(self, filepath: str):
+        """Class used to parser maps"""
         self.filepath: str = filepath
         self.network: Network = Network()
         self.current_line: int = 0
         self.nb_drones: int = 0
 
     def _parse_zone(self, line: str) -> Zone:
+        """Method used to parser zones"""
         splited_data: list = line.split("[")
         color: str | None = None
         max_drones: int = 1
@@ -63,7 +65,8 @@ class MapParser:
 
         return new_zone
 
-    def _parse_connection(self, line: str):
+    def _parse_connection(self, line: str) -> Connection:
+        """Method used to parser connections"""
         max_link_capacity: int = 1
         line_parts: list[str] = line.split("[")
         parsed_meta: dict[str, str] = {}
@@ -92,11 +95,20 @@ class MapParser:
         if len(data_list) != 3:
             raise ValueError(f"Error on line {self.current_line} "
                              "invalid format on connection data")
-        zone1: str = data_list[1]
-        zone2: str = data_list[2]
-        connection: Connection = Connection(zone1, zone2, max_link_capacity)
+        zone1_name: str = data_list[1]
+        zone2_name: str = data_list[2]
+        if (zone1_name not in self.network.zones
+                or zone2_name not in self.network.zones):
+            raise ValueError(f"Error on line {self.current_line}: Cannot"
+                             " connect undefined zones")
+
+        zone1_obj: Zone = self.network.zones[zone1_name]
+        zone2_obj: Zone = self.network.zones[zone2_name]
+
+        return Connection(zone1_obj, zone2_obj, max_link_capacity)
 
     def parse(self) -> Network:
+        """Main method where the zones and connections are parser"""
         with open(self.filepath, 'r') as f:
             for line in f:
                 self.current_line = self.current_line + 1
@@ -124,4 +136,7 @@ class MapParser:
                 elif line.startswith("connection:"):
                     created_connection = self._parse_connection(line)
                     self.network.add_connection(created_connection)
+        if not self.network.start_zone or not self.network.end_zone:
+            raise ValueError(f"Error on line {self.current_line}: must"
+                             " be exits a start point and an end point")
         return self.network
