@@ -1,4 +1,5 @@
 from enum import Enum
+from collections import deque
 
 
 class ZoneType(Enum):
@@ -57,3 +58,55 @@ class Network:
 
     def add_connection(self, connection: Connection) -> None:
         self.connections.append(connection)
+
+    def get_neighbors(self, current_zone: Zone) -> list[Zone]:
+        """
+            Finds all adjacent zones connected to the given zone
+        """
+        neighbors: list[Zone] = []
+        for connection in self.connections:
+            if current_zone == connection.zone1:
+                neighbors.append(connection.zone2)
+            elif current_zone == connection.zone2:
+                neighbors.append(connection.zone1)
+        return neighbors
+
+    def building_path(self, end_zone: Zone,
+                      came_from: dict[Zone, Zone | None]) -> list[Zone]:
+        """
+        Calculates the path using the dict who
+        has the zones where the drones came
+        """
+        path: list[Zone] = []
+        current: Zone | None = end_zone
+
+        while current is not None:
+            path.append(current)
+            current = came_from[current]
+
+        return path[::-1]
+
+    def get_shortest_path(self, start: Zone, end: Zone) -> list[Zone]:
+        """Calculates the shortest path between two zones using BFS"""
+        queue: deque[Zone] = deque()
+        queue.append(start)
+
+        visited: set[Zone] = set()
+        visited.add(start)
+
+        came_from: dict[Zone, Zone | None] = {}
+        came_from[start] = None
+
+        while queue:
+            curr_zone: Zone = queue.popleft()
+
+            if curr_zone == end:
+                return self.building_path(curr_zone, came_from)
+
+            neighbors: list[Zone] = self.get_neighbors(curr_zone)
+            for neighbor in neighbors:
+                if neighbor not in visited:
+                    came_from[neighbor] = curr_zone
+                    visited.add(neighbor)
+                    queue.append(neighbor)
+        return []
