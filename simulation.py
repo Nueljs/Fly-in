@@ -25,12 +25,28 @@ class Simulation:
             self.drones.append(drone)
 
     def run(self) -> None:
+        target_zone: Zone | None = self.network.end_zone
+        if target_zone is None:
+            raise ValueError("Simulation requires an end_zone to run")
         while self._get_arrived_count() < len(self.drones):
             print(f"Turn {self.turn}")
             for drone in self.drones:
                 print(drone)
                 if drone.cooldown > 0:
                     drone.cooldown = drone.cooldown - 1
+                    continue
+
+                path: list[Zone] = self.network.get_shortest_path(
+                                drone.current_zone, self.network.end_zone)
+                if len(path) > 1:
+                    next_zone: Zone = path[1]
+                    drone.current_zone.exit_drone(drone.drone_id)
+                    next_zone.enter_drone(drone.drone_id)
+                    drone.current_zone = next_zone
+                    if drone.current_zone.is_end:
+                        drone.status = DroneStatus.ARRIVED
+                else:
+                    drone.status = DroneStatus.WAITING
             self.turn = self.turn + 1
 
     def _get_arrived_count(self) -> int:

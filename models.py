@@ -32,6 +32,22 @@ class Zone:
             return (2)
         return (1)
 
+    @property
+    def has_capacity(self) -> bool:
+        if self.is_end:
+            return True
+        return len(self.curr_drones) < self.max_drones
+
+    def enter_drone(self, drone_id: str) -> None:
+        """Add a dron to the zone if there is capacity"""
+        if self.has_capacity:
+            self.curr_drones.append(drone_id)
+
+    def exit_drone(self, drone_id: str) -> None:
+        """Remove a drone from the zone if it's exists"""
+        if drone_id in self.curr_drones:
+            self.curr_drones.remove(drone_id)
+
 
 class Connection:
     def __init__(self, zone1: Zone, zone2: Zone,
@@ -40,6 +56,10 @@ class Connection:
         self.zone2: Zone = zone2
         self.max_link_capacity: int = max_link_capacity
         self.curr_drones: list[str] = []
+
+    @property
+    def has_capacity(self) -> bool:
+        return len(self.curr_drones) < self.max_link_capacity
 
 
 class Network:
@@ -61,14 +81,20 @@ class Network:
 
     def get_neighbors(self, current_zone: Zone) -> list[Zone]:
         """
-            Finds all adjacent zones connected to the given zone
+        Finds all adjacent zones connected to the given zone
         """
         neighbors: list[Zone] = []
         for connection in self.connections:
             if current_zone == connection.zone1:
-                neighbors.append(connection.zone2)
+                if (connection.zone2.zone_type != ZoneType.BLOCKED and
+                        connection.zone2.has_capacity and
+                        connection.has_capacity):
+                    neighbors.append(connection.zone2)
             elif current_zone == connection.zone2:
-                neighbors.append(connection.zone1)
+                if (connection.zone1.zone_type != ZoneType.BLOCKED and
+                        connection.zone1.has_capacity and
+                        connection.has_capacity):
+                    neighbors.append(connection.zone1)
         return neighbors
 
     def building_path(self, end_zone: Zone,
@@ -87,7 +113,7 @@ class Network:
         return path[::-1]
 
     def get_shortest_path(self, start: Zone, end: Zone) -> list[Zone]:
-        """Calculates the shortest path between two zones using BFS"""
+        """Find the shortest path between two zones using BFS"""
         queue: deque[Zone] = deque()
         queue.append(start)
 
