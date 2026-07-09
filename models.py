@@ -61,6 +61,16 @@ class Connection:
     def has_capacity(self) -> bool:
         return len(self.curr_drones) < self.max_link_capacity
 
+    def enter_drone(self, drone_id: str) -> None:
+        """Add a dron to the connection if there is capacity"""
+        if self.has_capacity:
+            self.curr_drones.append(drone_id)
+
+    def exit_drone(self, drone_id: str) -> None:
+        """Remove a drone from the connection if it's exists"""
+        if drone_id in self.curr_drones:
+            self.curr_drones.remove(drone_id)
+
 
 class Network:
     def __init__(self) -> None:
@@ -136,3 +146,11 @@ class Network:
                     visited.add(neighbor)
                     queue.append(neighbor)
         return []
+
+    def get_connection(self, zone1: Zone, zone2: Zone) -> Connection:
+        for conn in self.connections:
+            if ((zone1 == conn.zone1 and zone2 == conn.zone2) or
+                    (zone2 == conn.zone1 and zone1 == conn.zone2)):
+                return conn
+        raise ValueError("Error: Connection between zones not found")
+            

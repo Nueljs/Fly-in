@@ -1,4 +1,4 @@
-from models import Network, Zone
+from models import Network, Zone, Connection, ZoneType
 from drones import Drone, DroneStatus
 
 
@@ -28,19 +28,40 @@ class Simulation:
         target_zone: Zone | None = self.network.end_zone
         if target_zone is None:
             raise ValueError("Simulation requires an end_zone to run")
+
         while self._get_arrived_count() < len(self.drones):
             print(f"Turn {self.turn}")
             for drone in self.drones:
                 print(drone)
                 if drone.cooldown > 0:
                     drone.cooldown = drone.cooldown - 1
+
+                    if drone.cooldown == 0 and drone.target_zone is not None:
+                        curr_conn: Connection = self.network.get_connection(
+                                    drone.current_zone, drone.target_zone)
+                        curr_conn.exit_drone(drone.drone_id)
+                        drone.target_zone.enter_drone(drone.drone_id)
+                        drone.current_zone = drone.target_zone
+                        if drone.current_zone.is_end:
+                            drone.status = DroneStatus.ARRIVED
+                            drone.target_zone = None
+                        drone.target_zone = None
                     continue
 
                 path: list[Zone] = self.network.get_shortest_path(
-                                drone.current_zone, self.network.end_zone)
+                                drone.current_zone, target_zone)
                 if len(path) > 1:
                     next_zone: Zone = path[1]
+                    conn: Connection = self.network.get_connection(
+                                        drone.current_zone, next_zone)
                     drone.current_zone.exit_drone(drone.drone_id)
+                    conn.enter_drone(drone.drone_id)
+                    if next_zone.zone_type == ZoneType.RESTRICTED:
+                        drone.cooldown = 1
+                        drone.status = DroneStatus.IN_TRANSIT
+                        drone.target_zone = next_zone
+                        continue
+                    conn.exit_drone(drone.drone_id)
                     next_zone.enter_drone(drone.drone_id)
                     drone.current_zone = next_zone
                     if drone.current_zone.is_end:

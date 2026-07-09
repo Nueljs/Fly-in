@@ -20,6 +20,7 @@ class Drone:
         self.current_zone: Zone = current_zone
         self.status: DroneStatus = status
         self.cooldown: int = cooldown
+        self.target_zone: Zone | None = None
 
     def __str__(self) -> str:
         """
