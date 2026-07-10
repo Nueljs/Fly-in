@@ -30,9 +30,12 @@ class Simulation:
             raise ValueError("Simulation requires an end_zone to run")
 
         while self._get_arrived_count() < len(self.drones):
-            print(f"Turn {self.turn}")
+            turn_moves: list[str] = []
+
             for drone in self.drones:
-                print(drone)
+                if drone.status == DroneStatus.ARRIVED:
+                    continue
+
                 if drone.cooldown > 0:
                     drone.cooldown = drone.cooldown - 1
 
@@ -44,12 +47,15 @@ class Simulation:
                         drone.current_zone = drone.target_zone
                         if drone.current_zone.is_end:
                             drone.status = DroneStatus.ARRIVED
-                            drone.target_zone = None
+                        else:
+                            drone.status = DroneStatus.WAITING
+                        turn_moves.append(str(drone))
                         drone.target_zone = None
                     continue
 
                 path: list[Zone] = self.network.get_shortest_path(
                                 drone.current_zone, target_zone)
+
                 if len(path) > 1:
                     next_zone: Zone = path[1]
                     conn: Connection = self.network.get_connection(
@@ -60,14 +66,21 @@ class Simulation:
                         drone.cooldown = 1
                         drone.status = DroneStatus.IN_TRANSIT
                         drone.target_zone = next_zone
+                        conn_name: str = (f"{drone.current_zone.name}-"
+                                          f"{next_zone.name}")
+                        turn_moves.append(f"{drone.drone_id}-{conn_name}")
                         continue
                     conn.exit_drone(drone.drone_id)
                     next_zone.enter_drone(drone.drone_id)
                     drone.current_zone = next_zone
                     if drone.current_zone.is_end:
                         drone.status = DroneStatus.ARRIVED
+                    turn_moves.append(str(drone))
                 else:
                     drone.status = DroneStatus.WAITING
+            if turn_moves:
+                print(f"Turn {self.turn} " + " ".join(turn_moves))
+
             self.turn = self.turn + 1
 
     def _get_arrived_count(self) -> int:

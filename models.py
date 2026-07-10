@@ -89,22 +89,23 @@ class Network:
     def add_connection(self, connection: Connection) -> None:
         self.connections.append(connection)
 
-    def get_neighbors(self, current_zone: Zone) -> list[Zone]:
+    def get_neighbors(self, current_zone: Zone,
+                      check_capacity: bool = False) -> list[Zone]:
         """
         Finds all adjacent zones connected to the given zone
         """
         neighbors: list[Zone] = []
         for connection in self.connections:
             if current_zone == connection.zone1:
-                if (connection.zone2.zone_type != ZoneType.BLOCKED and
-                        connection.zone2.has_capacity and
-                        connection.has_capacity):
-                    neighbors.append(connection.zone2)
+                if connection.zone2.zone_type != ZoneType.BLOCKED:
+                    if not check_capacity or (connection.zone2.has_capacity
+                                              and connection.has_capacity):
+                        neighbors.append(connection.zone2)
             elif current_zone == connection.zone2:
-                if (connection.zone1.zone_type != ZoneType.BLOCKED and
-                        connection.zone1.has_capacity and
-                        connection.has_capacity):
-                    neighbors.append(connection.zone1)
+                if connection.zone1.zone_type != ZoneType.BLOCKED:
+                    if not check_capacity or (connection.zone1.has_capacity
+                                              and connection.has_capacity):
+                        neighbors.append(connection.zone1)
         return neighbors
 
     def building_path(self, end_zone: Zone,
@@ -139,7 +140,8 @@ class Network:
             if curr_zone == end:
                 return self.building_path(curr_zone, came_from)
 
-            neighbors: list[Zone] = self.get_neighbors(curr_zone)
+            check_cap: bool = (curr_zone == start)
+            neighbors: list[Zone] = self.get_neighbors(curr_zone, check_cap)
             for neighbor in neighbors:
                 if neighbor not in visited:
                     came_from[neighbor] = curr_zone
@@ -153,4 +155,3 @@ class Network:
                     (zone2 == conn.zone1 and zone1 == conn.zone2)):
                 return conn
         raise ValueError("Error: Connection between zones not found")
-            
