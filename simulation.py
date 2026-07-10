@@ -1,16 +1,23 @@
 from models import Network, Zone, Connection, ZoneType
 from drones import Drone, DroneStatus
+from visualizer import Visualizer
 
 
 class Simulation:
     def __init__(self,
                  network: Network,
-                 nb_drones: int) -> None:
+                 nb_drones: int,
+                 use_visual: bool = False) -> None:
         self.network: Network = network
         self.turn: int = 1
         self.drones: list[Drone] = []
+        self.use_visual: bool = use_visual
 
         self._spawn_drones(nb_drones)
+
+        self.visualizer: Visualizer | None = None
+        if self.use_visual:
+            self.visualizer = Visualizer(self.network, self.drones)
 
     def _spawn_drones(self, nb_drones: int) -> None:
         """
@@ -80,6 +87,9 @@ class Simulation:
                     drone.status = DroneStatus.WAITING
             if turn_moves:
                 print(f"Turn {self.turn} " + " ".join(turn_moves))
+
+            if self.use_visual and self.visualizer is not None:
+                self.visualizer.render(self.turn)
 
             self.turn = self.turn + 1
 
