@@ -4,10 +4,18 @@ from visualizer import Visualizer
 
 
 class Simulation:
+    """
+    Orchestrates the execution of drone movements across the network turn
+    by turn.
+    """
     def __init__(self,
                  network: Network,
                  nb_drones: int,
                  use_visual: bool = False) -> None:
+        """
+        Initializes the simulation state, spawns drones,
+        and sets up the visualizer.
+        """
         self.network: Network = network
         self.turn: int = 1
         self.drones: list[Drone] = []
@@ -32,6 +40,10 @@ class Simulation:
             self.drones.append(drone)
 
     def run(self) -> None:
+        """
+        Executes the main simulation loop, calculating paths and moving drones
+        until finished.
+        """
         target_zone: Zone | None = self.network.end_zone
         if target_zone is None:
             raise ValueError("Simulation requires an end_zone to run")
@@ -94,5 +106,9 @@ class Simulation:
             self.turn = self.turn + 1
 
     def _get_arrived_count(self) -> int:
+        """
+        Returns the total number of drones that have successfully reached
+        the end zone.
+        """
         return len(list(filter(lambda drone: drone.status ==
                                DroneStatus.ARRIVED, self.drones)))

@@ -5,6 +5,10 @@ from simulation import Simulation
 
 
 def main() -> None:
+    """
+    Main entry of the program. Parses command-line arguments,
+    loads the network map, and stats the simulation.
+    """
     use_visual: bool = "--visual" in sys.argv
     clean_args: list[str] = [arg for arg in sys.argv[1:] if arg != "--visual"]
 

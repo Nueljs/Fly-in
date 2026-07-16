@@ -12,10 +12,15 @@ class ZoneType(Enum):
 
 
 class Zone:
+    """Represents a specifi physical location (node) within the network"""
     def __init__(self, name: str, x: int, y: int,
                  zone_type: ZoneType = ZoneType.NORMAL,
                  color: str | None = None,
                  max_drones: int = 1) -> None:
+        """
+        Initializes a Zone with its coordinates, type, color, and max drone
+        capacity.
+        """
         self.name: str = name
         self.x: int = x
         self.y: int = y
@@ -34,6 +39,10 @@ class Zone:
 
     @property
     def has_capacity(self) -> bool:
+        """
+        Cheks if the zone can currently accept more drones based on its
+        limits.
+         """
         if self.is_end:
             return True
         return len(self.curr_drones) < self.max_drones
@@ -50,8 +59,15 @@ class Zone:
 
 
 class Connection:
+    """
+    Represents a pathway (edge) linking two different zones in the network.
+    """
     def __init__(self, zone1: Zone, zone2: Zone,
                  max_link_capacity: int = 1) -> None:
+        """
+        Checks if the connection can accept more drones in transit
+        simultaneously.
+        """
         self.zone1: Zone = zone1
         self.zone2: Zone = zone2
         self.max_link_capacity: int = max_link_capacity
@@ -73,13 +89,19 @@ class Connection:
 
 
 class Network:
+    """Represents the entire graph topology of zones and their connections."""
     def __init__(self) -> None:
+        """
+        Initializes an empty network graph with references
+        to start and end hubs.
+         """
         self.zones: dict[str, Zone] = {}
         self.connections: list[Connection] = []
         self.start_zone: Zone | None = None
         self.end_zone: Zone | None = None
 
     def add_zone(self, zone: Zone) -> None:
+        """Adds a new zone to the network and tracks the start/end hubs."""
         self.zones[zone.name] = zone
         if zone.is_start:
             self.start_zone = zone
@@ -87,6 +109,7 @@ class Network:
             self.end_zone = zone
 
     def add_connection(self, connection: Connection) -> None:
+        """Adds a new bidirectional connection (edge) to the network."""
         self.connections.append(connection)
 
     def get_neighbors(self, current_zone: Zone,
@@ -150,6 +173,9 @@ class Network:
         return []
 
     def get_connection(self, zone1: Zone, zone2: Zone) -> Connection:
+        """
+        Retrieves the specific connection object that links two given zones.
+        """
         for conn in self.connections:
             if ((zone1 == conn.zone1 and zone2 == conn.zone2) or
                     (zone2 == conn.zone1 and zone1 == conn.zone2)):

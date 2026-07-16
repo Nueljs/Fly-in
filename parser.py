@@ -2,6 +2,9 @@ from models import Network, Zone, ZoneType, Connection
 
 
 class MapParser:
+    """
+    Responsible for reading and interpreting the map file to build the Network.
+    """
     def __init__(self, filepath: str):
         """Class used to parser maps"""
         self.filepath: str = filepath

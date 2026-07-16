@@ -16,6 +16,9 @@ class Drone:
                  current_zone: Zone,
                  status: DroneStatus = DroneStatus.WAITING,
                  cooldown: int = 0) -> None:
+        """
+        Initializes a new drone with its starting zone, status, and cooldown.
+        """
         self.drone_id: str = drone_id
         self.current_zone: Zone = current_zone
         self.status: DroneStatus = status

@@ -3,6 +3,10 @@ from drones import Drone, DroneStatus
 
 
 class Visualizer:
+    """
+    Handles the 2D rendering of the network map and drone positions in
+    the terminal.
+    """
     COLORS: dict[str, str] = {
         "red": "\033[91m",
         "green": "\033[92m",
@@ -13,6 +17,10 @@ class Visualizer:
     }
 
     def __init__(self, network: Network, drones: list[Drone]) -> None:
+        """
+        Initializes the visualizer and calculates the grid dimensions
+        dynamically.
+        """
         self.network = network
         self.drones = drones
 
@@ -22,6 +30,10 @@ class Visualizer:
         self.grid_h = (self.max_y - self.min_y) * 2 + 1
 
     def _get_limits(self) -> tuple[int, int, int, int]:
+        """
+        Calculates the minimum and maximum X and Y coordinates across all
+        zones.
+        """
         zones = list(self.network.zones.values())
         min_x = min(z.x for z in zones)
         max_x = max(z.x for z in zones)
@@ -30,6 +42,10 @@ class Visualizer:
         return min_x, max_x, min_y, max_y
 
     def render(self, turn: int) -> None:
+        """
+        Draws the current state of the grid, including
+        stationary and moving drones.
+        """
         print(f"\n{self.COLORS['yellow']}=== TURN"
               f" {turn} ==={self.COLORS['reset']}")
 
