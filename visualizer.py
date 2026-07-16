@@ -22,7 +22,6 @@ class Visualizer:
         self.grid_h = (self.max_y - self.min_y) * 2 + 1
 
     def _get_limits(self) -> tuple[int, int, int, int]:
-        # Pythonic way de buscar mínimos y máximos
         zones = list(self.network.zones.values())
         min_x = min(z.x for z in zones)
         max_x = max(z.x for z in zones)
