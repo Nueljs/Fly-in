@@ -1,6 +1,6 @@
 .PHONY: install run debug clean lint lint-strict
 
-MAP ?= maps/easy/01_linear_path.txt
+MAP ?= maps/medium/01_dead_end_trap.txt
 
 install:
 	@echo "Installing dependencies..."
