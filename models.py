@@ -72,10 +72,12 @@ class Connection:
         self.zone2: Zone = zone2
         self.max_link_capacity: int = max_link_capacity
         self.curr_drones: list[str] = []
+        self.used_this_turn: int = 0
 
     @property
     def has_capacity(self) -> bool:
-        return len(self.curr_drones) < self.max_link_capacity
+        total_occupancy = len(self.curr_drones) + self.used_this_turn
+        return total_occupancy < self.max_link_capacity
 
     def enter_drone(self, drone_id: str) -> None:
         """Add a dron to the connection if there is capacity"""
@@ -129,6 +131,9 @@ class Network:
                     if not check_capacity or (connection.zone1.has_capacity
                                               and connection.has_capacity):
                         neighbors.append(connection.zone1)
+
+            neighbors.sort(
+                key=lambda z: 0 if z.zone_type == ZoneType.PRIORITY else 1)
         return neighbors
 
     def building_path(self, end_zone: Zone,

@@ -24,10 +24,10 @@ Run the simulation by passing a map file to the main script. You can optionally 
 
 ```bash
 # Standard output (grading format)
-python3 main.py maps/easy/01_linear_path.txt
+`make run` or python3 main.py maps/easy/01_linear_path.txt
 
 # Enhanced visual output
-python3 main.py maps/medium/02_circular_loop.txt --visual
+`make run_visual` or python3 main.py maps/medium/02_circular_loop.txt --visual
 ```
 
 ## Algorithm Choices and Implementation Strategy

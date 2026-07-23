@@ -42,7 +42,13 @@ class MapParser:
             if "max_drones" in dict_metadata:
                 try:
                     max_drones = int(dict_metadata["max_drones"])
-                except ValueError:
+                    if max_drones <= 0:
+                        raise ValueError(f"Error on line {self.current_line}:"
+                                         " max_drones must be a positive"
+                                         " integer")
+                except ValueError as e:
+                    if "positive integer" in str(e):
+                        raise e
                     raise ValueError(f"Error on line {self.current_line}: "
                                      "max_drones must be an int")
         data_list: list = [data.strip() for data in splited_data[0].split()]
@@ -91,7 +97,13 @@ class MapParser:
                 try:
                     max_link_capacity = int(
                         parsed_meta["max_link_capacity"])
-                except ValueError:
+                    if max_link_capacity <= 0:
+                        raise ValueError(f"Error on line {self.current_line}:"
+                                         " max_link_capacity must be a "
+                                         "positive integer")
+                except ValueError as e:
+                    if "positive integer" in str(e):
+                        raise e
                     raise ValueError(f"Error on line {self.current_line} "
                                      "max_link_capacity must be an int")
         data_list: list[str] = line_parts[0].replace("-", " ").split()
@@ -135,11 +147,32 @@ class MapParser:
                                          "zero")
                 elif line.startswith(("hub:", "start_hub:", "end_hub:")):
                     created_zone = self._parse_zone(line)
+
+                    if created_zone.name in self.network.zones:
+                        raise ValueError(f"Error on line {self.current_line}: "
+                                         "duplicate zone name "
+                                         f"'{created_zone.name}'")
+
                     self.network.add_zone(created_zone)
                 elif line.startswith("connection:"):
                     created_connection = self._parse_connection(line)
+
+                    for conn in self.network.connections:
+                        if ((created_connection.zone1 == conn.zone1 and
+                             created_connection.zone2 == conn.zone2) or
+                            (created_connection.zone1 == conn.zone2 and
+                             created_connection.zone2 == conn.zone1)):
+                            raise ValueError(
+                                f"Error on line {self.current_line}: duplicate"
+                                " connection between "
+                                f"'{created_connection.zone1.name}' and"
+                                f" '{created_connection.zone2.name}'")
                     self.network.add_connection(created_connection)
         if not self.network.start_zone or not self.network.end_zone:
             raise ValueError(f"Error on line {self.current_line}: must"
                              " be exits a start point and an end point")
+        if self.nb_drones == 0:
+            raise ValueError("Error on line 1: missing or invalid"
+                             " 'nb_drones:' configuration. It must be defined"
+                             " at the first line.")
         return self.network
