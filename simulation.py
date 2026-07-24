@@ -48,6 +48,13 @@ class Simulation:
         if target_zone is None:
             raise ValueError("Simulation requires an end_zone to run")
 
+        if self.network.start_zone:
+            initial_path = self.network.get_shortest_path(
+                self.network.start_zone, target_zone)
+            if not initial_path:
+                raise ValueError("Error: The graph is disconnected. No valid"
+                                 " path to end_zone")
+
         while self._get_arrived_count() < len(self.drones):
             turn_moves: list[str] = []
             any_moved: bool = False
